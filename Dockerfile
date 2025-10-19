@@ -1,5 +1,7 @@
+# Use the official NocoBase image with Oracle & LibreOffice
 FROM nocobase/nocobase:latest-full
 
+# Environment variables
 ENV APP_KEY=your-secret-key \
     DB_DIALECT=postgres \
     TZ=UTC \
@@ -7,10 +9,10 @@ ENV APP_KEY=your-secret-key \
     NODE_ENV=production \
     LOG_LEVEL=warn
 
-# Railway will inject DB_* automatically, no need to redeclare with ${}
-
+# Add Apache server name fix (harmless)
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
 
-EXPOSE 80
+# Make sure NocoBase core files exist even if a volume mounts
+CMD ["/bin/sh", "-c", "if [ ! -f /app/nocobase/package.json ]; then cp -r /usr/src/app/* /app/nocobase/; fi && yarn start"]
 
-CMD ["yarn", "start"]
+EXPOSE 80
