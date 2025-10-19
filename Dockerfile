@@ -14,6 +14,6 @@ ENV TZ=UTC
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf || true
 
 # Railway requires you to expose a port
-EXPOSE 8080
+EXPOSE 80
 
 # ✅ Do NOT add your own CMD — use the one from base image
