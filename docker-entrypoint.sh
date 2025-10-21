@@ -1,4 +1,3 @@
-#!/bin/sh
 set -e
 
 echo "COMMIT_HASH: $(cat /app/commit_hash.txt)"
@@ -20,6 +19,36 @@ fi
 if [ ! -d "/app/nocobase" ]; then
   mkdir nocobase
 fi
+
+# ======================================================
+# 🗄️ DEMO DATABASE IMPORT SECTION (added)
+# ======================================================
+echo "Checking database connectivity..."
+
+DB_CONN=""
+if [ -n "$DATABASE_URL" ]; then
+  DB_CONN="$DATABASE_URL"
+else
+  DB_CONN="postgresql://$DB_USER:$DB_PASSWORD@$DB_HOST:$DB_PORT/$DB_DATABASE"
+fi
+
+if [ -n "$DB_CONN" ]; then
+  echo "Connecting to database using: $DB_CONN"
+  for i in {1..10}; do
+    if psql "$DB_CONN" -c '\q' 2>/dev/null; then
+      echo "✅ Database is reachable."
+      break
+    fi
+    echo "Attempt $i/10: Database not ready yet, retrying in 5s..."
+    sleep 5
+  done
+
+  echo "🗄️ Attempting to import demo data from crm_demo.sql..."
+  psql "$DB_CONN" -f /app/crm_demo.sql || echo "⚠️ Import failed or data already exists, continuing..."
+else
+  echo "❌ No valid DB connection details found. Skipping import."
+fi
+# ======================================================
 
 if [ ! -f "/app/nocobase/package.json" ]; then
   echo 'copying...'
@@ -45,9 +74,6 @@ fi
 
 cd /app/nocobase && yarn start --quickstart
 
-# Run command with node if the first argument contains a "-" or is not a system command. The last
-# part inside the "{}" is a workaround for the following bug in ash/dash:
-# https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=874264
 if [ "${1#-}" != "${1}" ] || [ -z "$(command -v "${1}")" ] || { [ -f "${1}" ] && ! [ -x "${1}" ]; }; then
   set -- node "$@"
 fi
