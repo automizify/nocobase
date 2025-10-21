@@ -46,4 +46,4 @@ COPY docker-entrypoint.sh /app/
 
 EXPOSE 80/tcp
 
-CMD ["/app/docker-entrypoint.sh"]
+CMD ["bash", "/app/docker-entrypoint.sh"]
